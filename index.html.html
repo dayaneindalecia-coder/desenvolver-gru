@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dashboard Presencialidade · Desenvolver de Líderes · GRU 2026</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Inter',-apple-system,BlinkMacSystemFont,sans-serif;background:#E8E7E2;min-height:100vh;padding:1.5rem}
+.card{background:#fff;border-radius:16px;overflow:hidden;max-width:900px;margin:0 auto;box-shadow:0 2px 16px rgba(0,0,0,.08)}
+.header{display:flex;align-items:center;justify-content:space-between;padding:.9rem 1.4rem;background:#FFE600}
+.header-brand{font-size:20px;font-weight:900;color:#333;letter-spacing:-.02em}
+.header-sub{font-size:11px;color:#666;margin-top:2px;font-weight:500}
+.header-right{display:flex;align-items:center;gap:10px}
+.update-info{font-size:11px;color:#666}
+.refresh-btn{display:flex;align-items:center;gap:5px;padding:6px 14px;border-radius:8px;border:2px solid #333;background:transparent;color:#333;cursor:pointer;font-size:12px;font-weight:700}
+.refresh-btn:hover{background:rgba(0,0,0,.07)}
+.body{background:#F2F1EC;padding:1.2rem}
+.filters{display:flex;gap:8px;margin-bottom:1rem;flex-wrap:wrap}
+.filters select{padding:7px 12px;border-radius:8px;border:1.5px solid #D0CFCA;background:#fff;color:#333;font-size:13px;flex:1;min-width:130px;cursor:pointer;font-weight:500}
+.metrics{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:8px;margin-bottom:1rem}
+.metric{background:#fff;border-radius:10px;padding:.8rem 1rem;border:1.5px solid #E0DFDA}
+.metric-label{font-size:10px;color:#888;margin-bottom:3px;font-weight:700;text-transform:uppercase;letter-spacing:.04em}
+.metric-value{font-size:24px;font-weight:800;color:#333}
+.tabs{display:flex;gap:6px;margin-bottom:1rem}
+.tab{padding:7px 18px;border-radius:8px;border:1.5px solid #D0CFCA;background:#fff;color:#888;cursor:pointer;font-size:13px;font-weight:700;transition:all .12s}
+.tab.active{background:#FFE600;border-color:#D4C000;color:#333}
+.panel{display:none}.panel.active{display:block}
+.section-label{font-size:11px;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:.06em;margin-bottom:10px}
+.turma-group{margin-bottom:1.25rem}
+.turma-badge{display:inline-flex;align-items:center;font-size:11px;font-weight:700;padding:4px 14px;border-radius:20px;margin-bottom:8px;background:#FFE600;color:#333;border:1.5px solid #D4C000}
+.turma-badge.pending{background:#E0DFDA;color:#888;border-color:#C8C7C2}
+.bar-list{display:flex;flex-direction:column;gap:6px}
+.bar-row{display:flex;align-items:center;gap:8px;background:#fff;border-radius:8px;padding:8px 12px;border:1.5px solid #E0DFDA}
+.bar-name{font-size:12px;color:#333;width:195px;flex-shrink:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-weight:600}
+.bar-eq{font-size:10px;color:#aaa;font-weight:400}
+.bar-track{flex:1;height:8px;background:#EEEEE8;border-radius:999px;overflow:hidden}
+.bar-fill{height:100%;border-radius:999px;transition:width .5s}
+.bar-pct{font-size:12px;font-weight:800;width:44px;text-align:right}
+.tema-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:7px}
+.tema-card{background:#fff;border:1.5px solid #E0DFDA;border-radius:8px;padding:.65rem 1rem;display:flex;justify-content:space-between;align-items:center;gap:8px}
+.tema-name{font-size:12px;color:#333;flex:1;font-weight:500}
+.badge{font-size:11px;padding:3px 10px;border-radius:6px;font-weight:700;white-space:nowrap}
+.badge-ok{background:#D4EDDA;color:#1a5c33}
+.badge-warn{background:#FFF3CD;color:#856404}
+.badge-bad{background:#F8D7DA;color:#7a1c24}
+.badge-nd{background:#E0DFDA;color:#888}
+.err{background:#F8D7DA;border:1.5px solid #f5c6cb;border-radius:8px;padding:.75rem;color:#7a1c24;font-size:12px;margin-bottom:.75rem}
+</style>
+</head>
+<body>
+<div class="card">
+  <div class="header">
+    <div>
+      <div class="header-brand">mercadolivre</div>
+      <div class="header-sub">Presencialidade · Desenvolver de Líderes · GRU 2026</div>
+    </div>
+    <div class="header-right">
+      <span class="update-info" id="last-update"></span>
+      <button class="refresh-btn" onclick="loadData()">↻ Atualizar</button>
+    </div>
+  </div>
+  <div class="body">
+    <div class="filters">
+      <select id="equipe-sel" onchange="renderDash()">
+        <option value="todos">Todas as equipes</option>
+        <option value="SVC">SVC</option>
+        <option value="XD">XD</option>
+      </select>
+      <select id="turma-sel" onchange="renderDash()">
+        <option value="todas">Todas as turmas</option>
+        <option value="T1">Turma 1</option>
+        <option value="T2">Turma 2</option>
+        <option value="T3">Turma 3 (XD · 16/06)</option>
+        <option value="T4">Turma 4 (XD · 25/06)</option>
+      </select>
+    </div>
+    <div id="err-box"></div>
+    <div class="metrics" id="metrics"></div>
+    <div class="tabs">
+      <button class="tab active" onclick="switchTab('lideres',this)">Por líder</button>
+      <button class="tab" onclick="switchTab('temas',this)">Por tema</button>
+    </div>
+    <div class="panel active" id="panel-lideres">
+      <div class="section-label">Aderência por líder</div>
+      <div id="lideres-list"></div>
+    </div>
+    <div class="panel" id="panel-temas">
+      <div class="section-label">Aderência por tema</div>
+      <div class="tema-grid" id="temas-grid"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+const TEMAS=["Gestão de férias e Controle de Jornada","Gestão de Performance | Performance Shipping","People (cultura + KPIs)","Check & Annual Survey","Medidas Disciplinares c/ Jurídico | Compliance","Como fazer desligamentos?","PEL e PEX / BPP","Rotinas de Gestão / Gestão de Processos","Bloco 1 (Ferramentas Moki + YMS)","Bloco 2 (KPI's)","Feedback e Coaching","Liderança pelo Exemplo","Gestão do Clima","Gestão de Conflitos","Oratória","Iniciativa em Projetos","SHE"];
+
+const DADOS={
+  SVC:{
+    T1:{
+      "Andresa Luz Silva":["Gestão de férias e Controle de Jornada","Gestão de Performance | Performance Shipping","People (cultura + KPIs)","Check & Annual Survey","Medidas Disciplinares c/ Jurídico | Compliance","Como fazer desligamentos?","PEL e PEX / BPP","Rotinas de Gestão / Gestão de Processos","Bloco 1 (Ferramentas Moki + YMS)","Bloco 2 (KPI's)","Liderança pelo Exemplo","Gestão do Clima","Gestão de Conflitos","Iniciativa em Projetos"],
+      "Jeferson Ribeiro Viana":["Gestão de férias e Controle de Jornada","Gestão de Performance | Performance Shipping","People (cultura + KPIs)","Check & Annual Survey","Medidas Disciplinares c/ Jurídico | Compliance","Como fazer desligamentos?","PEL e PEX / BPP","Rotinas de Gestão / Gestão de Processos","Bloco 2 (KPI's)","Feedback e Coaching","Liderança pelo Exemplo","Gestão do Clima","Gestão de Conflitos","Iniciativa em Projetos"],
+      "Diego Da Silva Rocha":["Gestão de férias e Controle de Jornada","Medidas Disciplinares c/ Jurídico | Compliance","Como fazer desligamentos?","PEL e PEX / BPP","Rotinas de Gestão / Gestão de Processos","Bloco 1 (Ferramentas Moki + YMS)","Bloco 2 (KPI's)","Feedback e Coaching","Liderança pelo Exemplo","Gestão do Clima","Gestão de Conflitos","Iniciativa em Projetos"],
+      "Tais Vieira Dos Santos Silva":["People (cultura + KPIs)","Check & Annual Survey","Medidas Disciplinares c/ Jurídico | Compliance","Como fazer desligamentos?","Feedback e Coaching","Liderança pelo Exemplo","Gestão de Conflitos","Iniciativa em Projetos","Gestão de Performance | Performance Shipping"],
+      "Sara Santos Miranda":["People (cultura + KPIs)","Bloco 1 (Ferramentas Moki + YMS)","Bloco 2 (KPI's)","Feedback e Coaching","Gestão do Clima","Gestão de Conflitos","Iniciativa em Projetos","Gestão de férias e Controle de Jornada"],
+      "Ana Leticia Da Silva Faria":["People (cultura + KPIs)","Gestão de Performance | Performance Shipping","Feedback e Coaching","Gestão de Conflitos","Iniciativa em Projetos","Gestão de férias e Controle de Jornada"],
+      "Vinicius Prospero do Nascimento":["People (cultura + KPIs)","Medidas Disciplinares c/ Jurídico | Compliance","Gestão de Performance | Performance Shipping","Gestão de Conflitos"],
+      "Mayk Henrique de Almeida Silva":["Oratória","Bloco 1 (Ferramentas Moki + YMS)","Gestão de Performance | Performance Shipping","Gestão de Conflitos","Iniciativa em Projetos"],
+      "Sania Zoraya Ferreira Machado":["Oratória","Bloco 1 (Ferramentas Moki + YMS)","Feedback e Coaching","Liderança pelo Exemplo"],
+      "Jessica Moraes Dos Santos":["Bloco 2 (KPI's)","Liderança pelo Exemplo","Gestão de Conflitos"],
+      "Josiele Carvalho Silva":["Gestão de Performance | Performance Shipping","Gestão de Conflitos"],
+      "Andre Jose Da Silva":["Oratória","Gestão de férias e Controle de Jornada"]
+    },
+    T2:{}
+  },
+  XD:{
+    T1:{
+      "Rodrigo Andrade Martins":["Gestão de férias e Controle de Jornada","Gestão de Performance | Performance Shipping","Rotinas de Gestão / Gestão de Processos","Bloco 1 (Ferramentas Moki + YMS)","Bloco 2 (KPI's)","Feedback e Coaching","Liderança pelo Exemplo","Gestão de Conflitos","Medidas Disciplinares c/ Jurídico | Compliance","PEL e PEX / BPP","Como fazer desligamentos?"],
+      "Jose Ronacio Alves Da Silva":["Rotinas de Gestão / Gestão de Processos","People (cultura + KPIs)","Check & Annual Survey","Liderança pelo Exemplo","PEL e PEX / BPP","Como fazer desligamentos?"],
+      "Davi Cesar Silva Santos":["Medidas Disciplinares c/ Jurídico | Compliance","Liderança pelo Exemplo","PEL e PEX / BPP","Como fazer desligamentos?","Iniciativa em Projetos"],
+      "Naara Pedroso De Araujo":["Check & Annual Survey","Liderança pelo Exemplo","Oratória","Bloco 2 (KPI's)"],
+      "Luciano Teixeira":["Rotinas de Gestão / Gestão de Processos","Liderança pelo Exemplo","Bloco 1 (Ferramentas Moki + YMS)"],
+      "Brunno Jonathan Soares Santos":["Iniciativa em Projetos","Liderança pelo Exemplo","Bloco 1 (Ferramentas Moki + YMS)","Gestão de Performance | Performance Shipping","Gestão de férias e Controle de Jornada"],
+      "Luciano Andre Gama De Carvalho":["Oratória","Liderança pelo Exemplo","PEL e PEX / BPP","Como fazer desligamentos?"],
+      "Fernando Antonio":["Gestão do Clima","Liderança pelo Exemplo","Feedback e Coaching","Gestão de Conflitos"],
+      "Alisson Santos Dias Da Silva":["Gestão do Clima","Bloco 1 (Ferramentas Moki + YMS)","Bloco 2 (KPI's)"],
+      "Elivanio Goncalves Nunes":["Check & Annual Survey","Gestão de Performance | Performance Shipping"],
+      "Lucilene Barros Mendes Da Silva":["Liderança pelo Exemplo"],
+      "Leonardo Lima da Silva":["Liderança pelo Exemplo"],
+      "Adriano Gomes de Oliveira":[],"Anais Nunes Dos Santos":[],"Maria Deusa Santana":[]
+    },
+    T2:{},
+    T3:{"Marco Antonio Szora":null,"Marcos Aurelio Da Cruz":null,"Cleiton Paes Oliveira":null,"Ruthyele Oliveira Peixoto":null,"Edson Paulino Da Silva":null,"Elizeu Cristino De Oliveira Junior":null,"Ricardo Palma Alves":null,"Leandro De Oliveira Lima":null,"Natan Lopes dos Santos":null,"Cinthia Neia da Silva":null},
+    T4:{"Fernanda da Silva Varges":null,"Joaquim Alves De Lima Filho":null,"Talita da Silva Cardoso Costa":null,"Marcos Rodrigues Lima":null,"Tiago Paz Dias":null,"Kleber Bivar Da Silva":null,"Brenda Beatriz Rodrigues Da Silva":null,"Rodrigo Fonseca Camargo":null,"Odair Jose Da Costa":null}
+  }
+};
+
+const TURMA_INFO={T1:{label:"Turma 1 · SVC & XD",pending:false},T2:{label:"Turma 2 · SVC & XD",pending:false},T3:{label:"Turma 3 · XD — início 16/06",pending:true},T4:{label:"Turma 4 · XD — início 25/06",pending:true}};
+function barColor(p){return p>=90?'#2D7A4F':p>=70?'#CC9900':'#C0392B';}
+function pct(aus,tot){return tot?Math.round(((tot-aus)/tot)*100):100;}
+function switchTab(id,btn){document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));btn.classList.add('active');document.getElementById('panel-'+id).classList.add('active');}
+
+function renderDash(){
+  const eq=document.getElementById('equipe-sel').value;
+  const tm=document.getElementById('turma-sel').value;
+  const equipes=eq==='todos'?['SVC','XD']:[eq];
+  const turmas=tm==='todas'?['T1','T2','T3','T4']:[tm];
+  const entries=[];
+  for(const e of equipes){for(const t of turmas){const g=DADOS[e]?.[t];if(!g)continue;for(const[nome,ausentes] of Object.entries(g)){entries.push({nome,equipe:e,turma:t,ausentes,pending:ausentes===null});}}}
+  const total=entries.length;
+  const active=entries.filter(d=>!d.pending);
+  const cert=active.filter(d=>pct(d.ausentes.length,TEMAS.length)>=90).length;
+  const avg=active.length?Math.round(active.reduce((s,d)=>s+pct(d.ausentes.length,TEMAS.length),0)/active.length):0;
+  document.getElementById('metrics').innerHTML=`
+    <div class="metric"><div class="metric-label">Líderes</div><div class="metric-value">${total}</div></div>
+    <div class="metric"><div class="metric-label">Em andamento</div><div class="metric-value" style="color:#CC9900">${active.length}</div></div>
+    <div class="metric"><div class="metric-label">Aderência média</div><div class="metric-value" style="color:${barColor(avg)}">${avg}%</div></div>
+    <div class="metric"><div class="metric-label">Acima de 90%</div><div class="metric-value" style="color:#2D7A4F">${cert}</div></div>
+    <div class="metric"><div class="metric-label">Temas</div><div class="metric-value">${TEMAS.length}</div></div>`;
+  const byT={};
+  for(const d of entries){(byT[d.turma]=byT[d.turma]||[]).push(d);}
+  let html='';
+  for(const t of['T1','T2','T3','T4']){
+    if(!byT[t]?.length)continue;
+    const info=TURMA_INFO[t];
+    const sorted=[...byT[t]].sort((a,b)=>{if(a.pending&&!b.pending)return 1;if(!a.pending&&b.pending)return-1;return pct(a.ausentes?.length||0,TEMAS.length)-pct(b.ausentes?.length||0,TEMAS.length);});
+    html+=`<div class="turma-group"><div class="turma-badge${info.pending?' pending':''}">${info.label}</div><div class="bar-list">`;
+    html+=sorted.map(d=>{
+      if(d.pending)return`<div class="bar-row"><span class="bar-name">${d.nome} <span class="bar-eq">${d.equipe}</span></span><div class="bar-track"></div><span class="bar-pct" style="color:#bbb;font-size:11px">Em breve</span></div>`;
+      const p=pct(d.ausentes.length,TEMAS.length);
+      return`<div class="bar-row"><span class="bar-name" title="${d.nome}">${d.nome} <span class="bar-eq">${d.equipe}</span></span><div class="bar-track"><div class="bar-fill" style="width:${p}%;background:${barColor(p)}"></div></div><span class="bar-pct" style="color:${barColor(p)}">${p}%</span></div>`;
+    }).join('');
+    html+='</div></div>';
+  }
+  document.getElementById('lideres-list').innerHTML=html||'<div style="padding:1rem;color:#888;font-size:13px">Nenhum dado.</div>';
+  const tc={};
+  for(const t of TEMAS)tc[t]={p:0,tot:0};
+  for(const d of entries){if(d.pending)continue;for(const t of TEMAS){tc[t].tot++;if(!d.ausentes.includes(t))tc[t].p++;}}
+  document.getElementById('temas-grid').innerHTML=TEMAS.map(t=>{
+    const c=tc[t];
+    if(c.tot===0)return`<div class="tema-card"><span class="tema-name">${t}</span><span class="badge badge-nd">—</span></div>`;
+    const p=Math.round((c.p/c.tot)*100);
+    const bc=p>=90?'badge-ok':p>=70?'badge-warn':'badge-bad';
+    return`<div class="tema-card"><span class="tema-name">${t}</span><span class="badge ${bc}">${p}%</span></div>`;
+  }).join('');
+}
+
+async function loadData(){
+  document.getElementById('err-box').innerHTML='';
+  try{
+    const res=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:4000,system:`Leia a planilha "Ausências - Desenvolver" (ID: 1-pxebf9E5teu1Bqz9KBF4oMfoa-ICQtpbaNtmh6FQMU) via Google Drive MCP. Extraia ausências por tema separando SVC e XD. Retorne SOMENTE JSON sem markdown: {"temas":[...],"SVC":{"T1":{"Nome":[ausências]},"T2":{}},"XD":{"T1":{"Nome":[ausências]},"T2":{}}}`,messages:[{role:'user',content:'Extraia os dados.'}],mcp_servers:[{type:'url',url:'https://drivemcp.googleapis.com/mcp/v1',name:'gdrive'}]})});
+    const data=await res.json();
+    const text=data.content?.filter(b=>b.type==='text').map(b=>b.text).join('')||'';
+    const s=text.indexOf('{'),e=text.lastIndexOf('}');
+    if(s===-1)throw new Error('Resposta inválida');
+    const parsed=JSON.parse(text.slice(s,e+1));
+    if(parsed.SVC?.T1)Object.assign(DADOS.SVC.T1,parsed.SVC.T1);
+    if(parsed.SVC?.T2)DADOS.SVC.T2=parsed.SVC.T2;
+    if(parsed.XD?.T1)Object.assign(DADOS.XD.T1,parsed.XD.T1);
+    if(parsed.XD?.T2)DADOS.XD.T2=parsed.XD.T2;
+    const now=new Date();
+    document.getElementById('last-update').textContent=`Atualizado ${now.getHours().toString().padStart(2,'0')}:${now.getMinutes().toString().padStart(2,'0')}`;
+  }catch(e){
+    document.getElementById('err-box').innerHTML=`<div class="err">Não foi possível buscar dados atualizados. Exibindo dados locais.</div>`;
+    document.getElementById('last-update').textContent='Dados locais';
+  }
+  renderDash();
+}
+loadData();
+</script>
+</body>
+</html>
